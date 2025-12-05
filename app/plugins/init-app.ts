@@ -1,0 +1,16 @@
+export default defineNuxtPlugin({
+  name: 'init-app',
+  dependsOn: ['fetch'],
+  parallel: true,
+  async setup(app){
+    const { $api } = useNuxtApp();
+    const settingsStore = useSettingsStore()
+    const {fetchMainMenu} = settingsStore
+
+    const auth_token = useCookie('auth_token')
+    if (auth_token.value){
+      await $api.auth.me()
+      await fetchMainMenu()
+    }
+  }
+});
