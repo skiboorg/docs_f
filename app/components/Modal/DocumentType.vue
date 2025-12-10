@@ -21,6 +21,22 @@
             Название обязательно
           </small>
         </div>
+        <div class="field">
+          <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+            Код типа *
+          </label>
+          <InputText
+              id="name"
+              v-model="formData.slug"
+              class="w-full"
+              placeholder="Код"
+
+              required
+          />
+          <small v-if="!isNameValid" class="p-error text-xs">
+            Название обязательно
+          </small>
+        </div>
 
         <!-- Алиасы (теги) -->
         <div class="field">
@@ -166,6 +182,7 @@ const props = defineProps<{
 // Тип для формы
 interface FormData {
   name: string
+  slug: string
   aliases_ids: number[]
   applicable_company_type_ids: number[]
 }
@@ -173,6 +190,7 @@ interface FormData {
 // Реактивные данные
 const formData = reactive<FormData>({
   name: '',
+  slug: '',
   aliases_ids: [],
   applicable_company_type_ids: []
 })

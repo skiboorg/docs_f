@@ -3,7 +3,7 @@ import type { ICompanyListResponse, ICompany } from "~/repository/company/types"
 import type {IDocumentType} from "~/repository/document/types";
 
 const { $api } = useNuxtApp()
-const { confirm } = useConfirm()
+
 const toast = useToast()
 
 // Реактивные переменные

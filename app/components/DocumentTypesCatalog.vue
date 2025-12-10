@@ -170,7 +170,7 @@ watch(() => showAddDialog.value, (val) => {
             <div>
               <h3 class="text-lg font-semibold text-gray-900">{{ docType.name }}</h3>
               <div class="flex items-center gap-2 mt-1">
-                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">ID: {{ docType.id }}</span>
+                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Код: {{ docType.slug }}</span>
               </div>
             </div>
             <div class="flex gap-2">
@@ -230,17 +230,17 @@ watch(() => showAddDialog.value, (val) => {
               </div>
             </div>
 
-            <!-- Статистика -->
-            <div class="grid grid-cols-2 gap-4 text-sm text-gray-500 pt-4 border-t">
-              <div>
-                <div class="font-medium">Тегов:</div>
-                <div>{{ docType.aliases.length }}</div>
-              </div>
-              <div>
-                <div class="font-medium">Типов компаний:</div>
-                <div>{{ docType.applicable_company_types.length }}</div>
-              </div>
-            </div>
+<!--            &lt;!&ndash; Статистика &ndash;&gt;-->
+<!--            <div class="grid grid-cols-2 gap-4 text-sm text-gray-500 pt-4 border-t">-->
+<!--              <div>-->
+<!--                <div class="font-medium">Тегов:</div>-->
+<!--                <div>{{ docType.aliases.length }}</div>-->
+<!--              </div>-->
+<!--              <div>-->
+<!--                <div class="font-medium">Типов компаний:</div>-->
+<!--                <div>{{ docType.applicable_company_types.length }}</div>-->
+<!--              </div>-->
+<!--            </div>-->
           </div>
         </template>
       </Card>

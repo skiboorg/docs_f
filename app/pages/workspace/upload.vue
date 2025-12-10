@@ -26,19 +26,11 @@
           <ul class="space-y-3 text-gray-600">
             <li class="flex items-start">
               <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-              <span>Имя файла должно содержать ИНН компании (10 или 12 цифр)</span>
+              <span>Поддерживаемые форматы: <span class="font-medium">ZIP, RAR</span></span>
             </li>
             <li class="flex items-start">
               <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-              <span>Пример: <code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono">7707083893_documents.zip</code></span>
-            </li>
-            <li class="flex items-start">
-              <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-              <span>Поддерживаемые форматы: <span class="font-medium">ZIP, RAR, 7z</span></span>
-            </li>
-            <li class="flex items-start">
-              <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-              <span>Если компания с указанным ИНН не существует, она будет создана автоматически</span>
+              <span>Если компания  не существует, она будет создана автоматически</span>
             </li>
             <li class="flex items-start">
               <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
@@ -66,7 +58,7 @@
                 id="file-upload"
                 ref="fileInput"
                 @change="onFileSelect"
-                accept=".zip,.rar,.7z"
+                accept=".zip,.rar"
                 class="hidden"
             />
 
@@ -82,7 +74,7 @@
             </label>
 
             <p class="text-sm text-gray-500 mt-2">
-              Поддерживаются: ZIP, RAR, 7z
+              Поддерживаются: ZIP, RAR
             </p>
 
             <!-- Выбранный файл -->
@@ -180,43 +172,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-
+const {$api} = useNuxtApp()
 const fileInput = ref(null)
 const selectedFile = ref(null)
 const isDragOver = ref(false)
 const isUploading = ref(false)
-
-// Валидация ИНН из имени файла
-const innValidation = computed(() => {
-  if (!selectedFile.value) return null
-
-  const fileName = selectedFile.value.name
-  // Ищем ИНН в имени файла (10 или 12 цифр)
-  const innMatch = fileName.match(/(\d{10}|\d{12})/)
-
-  if (!innMatch) {
-    return {
-      isValid: false,
-      message: 'Ошибка: ИНН (10 или 12 цифр) не найден в имени файла'
-    }
-  }
-
-  const inn = innMatch[1]
-  const isValidLength = inn.length === 10 || inn.length === 12
-
-  if (!isValidLength) {
-    return {
-      isValid: false,
-      message: 'Ошибка: ИНН должен содержать 10 или 12 цифр'
-    }
-  }
-
-  return {
-    isValid: true,
-    message: `ИНН найден: ${inn} - ${inn.length === 10 ? 'Юридическое лицо' : 'Физическое лицо/ИП'}`
-  }
-})
 
 const onFileSelect = (event) => {
   const file = event.target.files[0]
@@ -224,6 +184,10 @@ const onFileSelect = (event) => {
     selectedFile.value = file
   }
 }
+
+const formData = ref({
+  file: null,
+})
 
 const onDragOver = () => {
   isDragOver.value = true
@@ -242,7 +206,7 @@ const onDrop = (event) => {
 }
 
 const validateFileType = (file) => {
-  const validExtensions = ['.zip', '.rar', '.7z']
+  const validExtensions = ['.zip', '.rar']
   const fileName = file.name.toLowerCase()
   const isValid = validExtensions.some(ext => fileName.endsWith(ext))
 
@@ -269,23 +233,27 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
+const { pending, send, form } = useForm({
+  apiFn: $api.document.upload,
+  formData: formData.value,
+  asFormData: true,
+  onSuccess: async (res)=>{
+    console.log(res);
+
+    //document.location = '/'
+  }
+})
+
 const uploadAndProcess = async () => {
   if (!selectedFile.value) return
-  if (innValidation.value && !innValidation.value.isValid) return
+
 
   isUploading.value = true
-
+  console.log(selectedFile.value)
+  formData.value.file = selectedFile.value
   try {
     // Имитация загрузки файла
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    // Здесь будет реальный код загрузки
-    // const formData = new FormData()
-    // formData.append('archive', selectedFile.value)
-    // await $fetch('/api/upload', {
-    //   method: 'POST',
-    //   body: formData
-    // })
+    await send()
 
     alert('Архив успешно загружен и обрабатывается')
     removeFile()

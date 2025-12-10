@@ -24,8 +24,6 @@ const { pending, send, form } = useForm({
   }
 })
 
-
-
 const can_send = computed(()=>{
   return !!form.login && !!form.password
 })

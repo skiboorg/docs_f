@@ -1,4 +1,5 @@
-import type {IDocumentType} from "~/repository/document/types";
+import type {IDocumentType, IDocumentResponse, IVersionResponseResult} from "~/repository/document/types";
+import type {ICompanyListResponse} from "~/repository/company/types";
 
 export function createDocumentRepository(appFetch: typeof $fetch){
 
@@ -21,10 +22,36 @@ export function createDocumentRepository(appFetch: typeof $fetch){
                 body
             })
         },
+        upload(body){
+            return appFetch('/api/document/documents/upload/',{
+                method: 'POST',
+                body
+            })
+        },
         delete_type(id){
             return appFetch(`/api/document/document-types/${id}/`,{
                 method: 'DELETE',
             })
         },
+        all(params:{
+            query: Record<string, any>,
+        }){
+            const formattedQueryString = getQueryString(params.query)
+            return appFetch<IDocumentResponse>(`/api/document/documents/?${formattedQueryString}`)
+        },
+        versions(params:{
+            query: Record<string, any>,
+        }){
+            const formattedQueryString = getQueryString(params.query)
+            return appFetch<IVersionResponseResult>(`/api/document/document-versions/?${formattedQueryString}`)
+        },
+        version_action(params:{
+            uuid:string
+            action: 'approve' | 'reject',
+        }){
+            return appFetch(`/api/document/document-versions/${params.uuid}/${params.action}/`,{
+                method: 'POST'
+            })
+        }
     }
 }
