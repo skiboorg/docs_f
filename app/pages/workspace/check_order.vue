@@ -149,18 +149,18 @@ watch(selectedType,async ()=>{
               <div class="col-span-5 flex items-start gap-2 justify-end">
 
                 <a target="_blank" :href="doc.file">
-                  <Button outlined severity="secondary" icon="pi pi-eye"/>
+                  <Button text severity="secondary" icon="pi pi-eye"/>
                 </a>
-                <Button :loading="loading"
-                        outlined
-                        @click="vesionAction('approve',doc.uuid)"
-                        severity="success"
-                        icon="pi pi-check"/>
-                <Button :loading="loading"
-                        outlined
-                        @click="vesionAction('reject',doc.uuid)"
-                        severity="danger"
-                        icon="pi pi-ban"/>
+                <UIBtnConfirmBtn severity="success"
+                                 message="Принять документ?"
+                                 :loading="loading"
+                                 icon="pi pi-check" @confirm="vesionAction('approve',doc.uuid)"/>
+
+                <UIBtnConfirmBtn message="Отклонить документ?"
+                                 :loading="loading"
+                                 icon="pi pi-ban"
+                                 @confirm="vesionAction('reject',doc.uuid)"/>
+
               </div>
             </div>
           </div>

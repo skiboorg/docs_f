@@ -151,13 +151,11 @@ watch(() => showAddCompanyDialog.value, (val) => {
 
         <!-- Кнопки действий -->
         <div class="flex gap-3 w-full sm:w-auto">
-          <Button
-              label="Добавить компанию"
-              icon="pi pi-plus"
-              class="p-button-primary"
-              @click="showAddCompanyDialog = true"
-              :loading="pending"
-          />
+
+          <UIBtnAdd @click="showAddCompanyDialog = true"
+          label="Добавить компанию"
+          icon="pi pi-plus"
+          :loading="pending"/>
           <Button
               icon="pi pi-refresh"
               class="p-button-outlined p-button-secondary"
@@ -198,16 +196,10 @@ watch(() => showAddCompanyDialog.value, (val) => {
               </div>
             </div>
             <div class="flex gap-2">
-              <Button
-                  icon="pi pi-pencil"
-                  class="p-button-text p-button-sm"
-                  @click="editCompany(company)"
-              />
-              <Button
-                  icon="pi pi-trash"
-                  class="p-button-text p-button-sm p-button-danger"
-                  @click="confirmDelete(company)"
-              />
+              <UIBtnEdit  @click="editCompany(company)"/>
+              <UIBtnConfirmBtn icon="pi pi-trash" message="Точно удалить компанию?" @confirm="confirmDelete(company)" />
+
+
             </div>
           </div>
         </template>

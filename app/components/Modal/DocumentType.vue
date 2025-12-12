@@ -160,7 +160,6 @@ onMounted(async () => {
 </script>
 
 <template>
-  {{is_edit_mode}}
   <form @submit.prevent="handleSubmit" class="space-y-6">
     <div class="grid md:grid-cols-2 gap-6">
       <!-- Основная информация -->

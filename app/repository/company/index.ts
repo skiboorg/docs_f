@@ -10,8 +10,11 @@ export function createCompanyRepository(appFetch: typeof $fetch){
             console.log(params.query)
             return appFetch<ICompanyListResponse>(`/api/company/companies/?${formattedQueryString}`)
         }
-        ,summary(){
-            return appFetch('/api/company/company-document-matrix/')
+        ,summary(params:{
+            query: Record<string, any>,
+        }){
+            const formattedQueryString = getQueryString(params.query)
+            return appFetch(`/api/company/company-document-matrix/?${formattedQueryString}`)
         },
         types(){
             return appFetch<ICompanyType[]>('/api/company/company-types/')

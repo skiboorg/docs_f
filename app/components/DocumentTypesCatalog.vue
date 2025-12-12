@@ -132,15 +132,11 @@ watch(() => showAddDialog.value, (val) => {
             Найдено: {{ filteredDocumentTypes?.length || 0 }} из {{ document_types?.length || 0 }}
           </div>
         </div>
+        <UIBtnAdd @click="showAddDialog = true"
+                  label="Добавить тип"
+                  icon="pi pi-plus"
+                  :loading="pending"/>
 
-        <Button
-
-            label="Добавить тип"
-            icon="pi pi-plus"
-            class="p-button-primary"
-            @click="showAddDialog = true"
-            :loading="pending"
-        />
       </div>
     </div>
 
@@ -173,18 +169,9 @@ watch(() => showAddDialog.value, (val) => {
               </div>
             </div>
             <div class="flex gap-2">
-              <Button
+              <UIBtnEdit  @click="editDocumentType(docType)"/>
+              <UIBtnConfirmBtn icon="pi pi-trash" message="Точно удалить тип документа?" @confirm="deleteDocumentType(docType.id)" />
 
-                  icon="pi pi-pencil"
-                  class="p-button-text p-button-sm"
-                  @click="editDocumentType(docType)"
-              />
-              <Button
-
-                  icon="pi pi-trash"
-                  class="p-button-text p-button-sm p-button-danger"
-                  @click="deleteDocumentType(docType.id)"
-              />
             </div>
           </div>
         </template>
@@ -279,8 +266,6 @@ watch(() => showAddDialog.value, (val) => {
       />
     </Dialog>
 
-    <!-- Диалог подтверждения удаления -->
-    <ConfirmDialog></ConfirmDialog>
   </div>
 </template>
 
