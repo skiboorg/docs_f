@@ -20,7 +20,6 @@ const openModal = async (data:{
   company:ICompany,
   document:IDocumentShort
 }) => {
-
   modalData.value = data
   modalVisible.value = true
   console.log(data)
@@ -31,12 +30,6 @@ const openModal = async (data:{
       page_size:100
     }
   })
-  console.log(response.results)
-  // здесь запрос к API
-  // const { data } = await $fetch(`/api/documents?company=${uuid}`)
-  // modalDocuments.value = data
-
-  // временное наполнение – убрать после подключения API
   modalDocuments.value = response.results
 }
 

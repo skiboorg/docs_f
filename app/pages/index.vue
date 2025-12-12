@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type {ILoginPayload} from "~/repository/auth/types";
+import { useToast } from 'primevue/usetoast';
 
 definePageMeta({
   guest: true,
 })
-
+const toast = useToast()
 const { $api } = useNuxtApp();
 const authCookie = useCookie('auth_token')
 

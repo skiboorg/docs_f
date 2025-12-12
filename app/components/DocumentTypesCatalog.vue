@@ -4,12 +4,14 @@ import type { ICompanyType } from "~/repository/company/types";
 
 const { pagePermissions } = usePagePermissions()
 const { $api } = useNuxtApp()
-
+import { useToast } from 'primevue/usetoast';
+const toast = useToast()
 
 // Реактивные переменные
 const searchQuery = ref('')
 const showDialog = ref(false)
 const showAddDialog = ref(false)
+const editMode = ref(false)
 const editingDocType = ref<IDocumentType | null>(null)
 
 // Загрузка данных с типизацией
@@ -45,6 +47,7 @@ const editDocumentType = (docType: IDocumentType) => {
     aliases_ids: docType.aliases.map(alias => alias.id),
     applicable_company_type_ids: docType.applicable_company_types.map(ct => ct.id)
   }
+  editMode.value = true
   showDialog.value = true
 }
 
@@ -85,21 +88,17 @@ const deleteDocumentType = async (id: number) => {
     if (document_types.value) {
       document_types.value = document_types.value.filter(docType => docType.id !== id)
     }
+    toast.add({ severity: 'info',summary:'Успешно', detail: 'Тип удален', life: 3000 });
     await refresh() // Обновляем данные с сервера
   } catch (err) {
     console.error('Ошибка удаления:', err)
   }
 }
 
-// Утилитные функции
-const getAliasesString = (docType: IDocumentType): string => {
-  return docType.aliases.map(alias => alias.name).join(', ')
+const handleCreated = async () => {
+  showDialog.value = false
+  await refresh()
 }
-
-const getCompanyTypesString = (docType: IDocumentType): string => {
-  return docType.applicable_company_types.map(ct => ct.name).join(', ')
-}
-
 // Обработчики событий
 watch(() => showAddDialog.value, (val) => {
   if (val) {
@@ -272,8 +271,10 @@ watch(() => showAddDialog.value, (val) => {
     >
       <ModalDocumentType
           :doc-type="editingDocType"
+          :is_edit_mode="editMode"
           :loading="pending"
           @submit="handleFormSubmit"
+          @created="handleCreated"
           @cancel="showDialog = false"
       />
     </Dialog>

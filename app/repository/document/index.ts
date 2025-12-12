@@ -16,6 +16,12 @@ export function createDocumentRepository(appFetch: typeof $fetch){
                 body
             })
         },
+        update_type(body){
+            return appFetch(`/api/document/document-types/${body.id}/`,{
+                method: 'PATCH',
+                body
+            })
+        },
         create_tag(body){
             return appFetch('/api/document/document-tags/',{
                 method: 'POST',

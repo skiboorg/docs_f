@@ -1,4 +1,166 @@
+<script setup lang="ts">
+
+import type { IDocumentType,IDocumentTag } from '~/repository/document/types'
+import type { ICompanyType } from '~/repository/company/types'
+import { useToast } from 'primevue/usetoast';
+const toast = useToast()
+
+const { $api } = useNuxtApp()
+
+// Props и emits
+const props = defineProps<{
+  docType?: IDocumentType | null
+  loading?: boolean
+  is_edit_mode?: boolean
+}>()
+
+const emits = defineEmits(['created','cancel'])
+
+// Тип для формы
+interface FormData {
+  id?: string
+  name: string
+  slug: string
+  aliases_ids: number[]
+  applicable_company_type_ids: number[]
+}
+
+// Реактивные данные
+const formData = reactive<FormData>({
+  name: '',
+  slug: '',
+  aliases_ids: [],
+  applicable_company_type_ids: []
+})
+
+// Опции для селектов
+
+const documentTags = ref<IDocumentTag[]>([])
+const companyTypes = ref<ICompanyType[]>([])
+const tagsLoading = ref(false)
+const companyTypesLoading = ref(false)
+
+// Состояние UI
+const showPreview = ref(false)
+const showTagDialog = ref(false)
+const newTagName = ref('')
+
+// Вычисляемые свойства
+const isNameValid = computed(() => formData.name.trim().length > 0)
+const isFormValid = computed(() => isNameValid.value && formData.slug)
+
+const selectedTagsNames = computed(() => {
+  return formData.aliases_ids.map(tagId =>
+      documentTags.value.find(tag => tag.id === tagId)?.name || `Тег #${tagId}`
+  )
+})
+
+const selectedCompanyTypesNames = computed(() => {
+  return formData.applicable_company_type_ids.map(companyTypeId =>
+      companyTypes.value.find(ct => ct.id === companyTypeId)?.name || `Тип #${companyTypeId}`
+  )
+})
+
+// Методы
+const getTagName = (tagId: number) => {
+  const tag = documentTags.value.find(t => t.id === tagId)
+  return tag?.name || `Тег #${tagId}`
+}
+
+const getCompanyTypeName = (companyTypeId: number) => {
+  const companyType = companyTypes.value.find(ct => ct.id === companyTypeId)
+  return companyType?.name || `Тип #${companyTypeId}`
+}
+
+const loadDocumentTags = async () => {
+  try {
+    tagsLoading.value = true
+    // Предполагаем, что есть endpoint для получения тегов
+    documentTags.value = await $api.document.tags()
+  } catch (error) {
+    console.error('Ошибка загрузки тегов:', error)
+  } finally {
+    tagsLoading.value = false
+  }
+}
+
+const loadCompanyTypes = async () => {
+  try {
+    companyTypesLoading.value = true
+    // Предполагаем, что есть endpoint для получения типов компаний
+    companyTypes.value = await $api.company.types()
+  } catch (error) {
+    console.error('Ошибка загрузки типов компаний:', error)
+  } finally {
+    companyTypesLoading.value = false
+  }
+}
+
+const createTag = async () => {
+  if (!newTagName.value.trim()) return
+
+  try {
+    const newTag = await $api.document.create_tag({ name: newTagName.value })
+    documentTags.value.push(newTag)
+    formData.aliases_ids.push(newTag.id)
+    newTagName.value = ''
+    showTagDialog.value = false
+  } catch (error) {
+    console.error('Ошибка создания тега:', error)
+  }
+}
+const { pending, send, form } = useForm({
+  apiFn: props.is_edit_mode ? $api.document.update_type :$api.document.create_type,
+  formData: formData,
+  asFormData: false,
+  onSuccess: async (res)=>{
+    console.log(res);
+    toast.add({ severity: 'success',summary:'Успешно', detail:props.is_edit_mode ? 'Тип изменен':'Тип создан' , life: 3000 });
+    emits('created')
+  }
+})
+const handleSubmit = async () => {
+  if (!isFormValid.value) return
+
+  const submitData: FormData = {
+    name: formData.name.trim(),
+    aliases_ids: [...formData.aliases_ids],
+    applicable_company_type_ids: [...formData.applicable_company_type_ids]
+  }
+  await send()
+
+}
+
+// Инициализация формы при изменении props.docType
+watch(() => props.docType, (docType) => {
+  if (docType) {
+    formData.id = docType.id
+    formData.name = docType.name
+    formData.slug = docType.slug
+    formData.aliases_ids = docType.aliases_ids || docType.aliases.map(tag => tag.id)
+    formData.applicable_company_type_ids = docType.applicable_company_type_ids ||
+        docType.applicable_company_types.map(ct => ct.id)
+  } else {
+    // Сброс формы
+    Object.assign(formData, {
+      name: '',
+      aliases_ids: [],
+      applicable_company_type_ids: []
+    })
+  }
+}, { immediate: true })
+
+// Загрузка справочников при монтировании
+onMounted(async () => {
+  await Promise.all([
+    loadDocumentTags(),
+    loadCompanyTypes()
+  ])
+})
+</script>
+
 <template>
+  {{is_edit_mode}}
   <form @submit.prevent="handleSubmit" class="space-y-6">
     <div class="grid md:grid-cols-2 gap-6">
       <!-- Основная информация -->
@@ -165,159 +327,6 @@
   </Dialog>
 </template>
 
-<script setup lang="ts">
-
-import type { IDocumentType,IDocumentTag } from '~/repository/document/types'
-import type { ICompanyType } from '~/repository/company/types'
-
-const { $api } = useNuxtApp()
-
-// Props и emits
-const props = defineProps<{
-  docType?: IDocumentType | null
-  loading?: boolean
-}>()
-
-
-// Тип для формы
-interface FormData {
-  name: string
-  slug: string
-  aliases_ids: number[]
-  applicable_company_type_ids: number[]
-}
-
-// Реактивные данные
-const formData = reactive<FormData>({
-  name: '',
-  slug: '',
-  aliases_ids: [],
-  applicable_company_type_ids: []
-})
-
-// Опции для селектов
-
-const documentTags = ref<IDocumentTag[]>([])
-const companyTypes = ref<ICompanyType[]>([])
-const tagsLoading = ref(false)
-const companyTypesLoading = ref(false)
-
-// Состояние UI
-const showPreview = ref(false)
-const showTagDialog = ref(false)
-const newTagName = ref('')
-
-// Вычисляемые свойства
-const isNameValid = computed(() => formData.name.trim().length > 0)
-const isFormValid = computed(() => isNameValid.value)
-
-const selectedTagsNames = computed(() => {
-  return formData.aliases_ids.map(tagId =>
-      documentTags.value.find(tag => tag.id === tagId)?.name || `Тег #${tagId}`
-  )
-})
-
-const selectedCompanyTypesNames = computed(() => {
-  return formData.applicable_company_type_ids.map(companyTypeId =>
-      companyTypes.value.find(ct => ct.id === companyTypeId)?.name || `Тип #${companyTypeId}`
-  )
-})
-
-// Методы
-const getTagName = (tagId: number) => {
-  const tag = documentTags.value.find(t => t.id === tagId)
-  return tag?.name || `Тег #${tagId}`
-}
-
-const getCompanyTypeName = (companyTypeId: number) => {
-  const companyType = companyTypes.value.find(ct => ct.id === companyTypeId)
-  return companyType?.name || `Тип #${companyTypeId}`
-}
-
-const loadDocumentTags = async () => {
-  try {
-    tagsLoading.value = true
-    // Предполагаем, что есть endpoint для получения тегов
-    documentTags.value = await $api.document.tags()
-  } catch (error) {
-    console.error('Ошибка загрузки тегов:', error)
-  } finally {
-    tagsLoading.value = false
-  }
-}
-
-const loadCompanyTypes = async () => {
-  try {
-    companyTypesLoading.value = true
-    // Предполагаем, что есть endpoint для получения типов компаний
-    companyTypes.value = await $api.company.types()
-  } catch (error) {
-    console.error('Ошибка загрузки типов компаний:', error)
-  } finally {
-    companyTypesLoading.value = false
-  }
-}
-
-const createTag = async () => {
-  if (!newTagName.value.trim()) return
-
-  try {
-    const newTag = await $api.document.create_tag({ name: newTagName.value })
-    documentTags.value.push(newTag)
-    formData.aliases_ids.push(newTag.id)
-    newTagName.value = ''
-    showTagDialog.value = false
-  } catch (error) {
-    console.error('Ошибка создания тега:', error)
-  }
-}
-const { pending, send, form } = useForm({
-  apiFn: $api.document.create_type,
-  formData: formData,
-  asFormData: false,
-  onSuccess: async (res)=>{
-    console.log(res);
-
-    //document.location = '/'
-  }
-})
-const handleSubmit = () => {
-  if (!isFormValid.value) return
-
-  const submitData: FormData = {
-    name: formData.name.trim(),
-    aliases_ids: [...formData.aliases_ids],
-    applicable_company_type_ids: [...formData.applicable_company_type_ids]
-  }
-  send()
-
-}
-
-// Инициализация формы при изменении props.docType
-watch(() => props.docType, (docType) => {
-  if (docType) {
-    formData.name = docType.name
-    formData.aliases_ids = docType.aliases_ids || docType.aliases.map(tag => tag.id)
-    formData.applicable_company_type_ids = docType.applicable_company_type_ids ||
-        docType.applicable_company_types.map(ct => ct.id)
-  } else {
-    // Сброс формы
-    Object.assign(formData, {
-      name: '',
-      aliases_ids: [],
-      applicable_company_type_ids: []
-    })
-  }
-}, { immediate: true })
-
-// Загрузка справочников при монтировании
-onMounted(async () => {
-  await Promise.all([
-    loadDocumentTags(),
-    loadCompanyTypes()
-  ])
-})
-</script>
 
 <style scoped>
 .field {

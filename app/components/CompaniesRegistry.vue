@@ -11,6 +11,7 @@ const searchQuery = ref('')
 const page = ref(1)
 const showCompanyDialog = ref(false)
 const showAddCompanyDialog = ref(false)
+const editMode = ref(false)
 const editingCompany = ref<ICompany | null>(null)
 
 // Загрузка данных
@@ -51,6 +52,7 @@ const dialogHeader = computed(() =>
 // Методы
 const editCompany = (company: ICompany) => {
   editingCompany.value = { ...company }
+  editMode.value = true
   showCompanyDialog.value = true
 }
 
@@ -60,10 +62,11 @@ const addCompany = () => {
 }
 
 const handleFormSubmit = async (companyData: any) => {
+  console.log(companyData)
   try {
     if (editingCompany.value) {
       // Обновление существующей компании
-      const updated = await $api.company.update(editingCompany.value.uuid, companyData)
+      const updated = await $api.company.update(companyData)
       toast.add({ severity: 'success', summary: 'Успешно', detail: 'Компания обновлена', life: 3000 })
 
       // Обновляем данные в списке
@@ -89,7 +92,7 @@ const handleFormSubmit = async (companyData: any) => {
 
 const confirmDelete = async (company: ICompany) => {
     await $api.company.delete(company.id)
-    toast.add({ severity: 'success', summary: 'Успешно', detail: 'Компания удалена', life: 3000 })
+    toast.add({ severity: 'info', summary: 'Успешно', detail: 'Компания удалена', life: 3000 })
     await refresh() // Обновляем общее количество
 
 }
@@ -295,14 +298,12 @@ watch(() => showAddCompanyDialog.value, (val) => {
       <ModalCompany
           :company="editingCompany"
           :loading="pending"
+          :is_edit_mode="editMode"
           @submit="handleFormSubmit"
           @cancel="showCompanyDialog = false"
       />
     </Dialog>
 
-    <!-- Диалог подтверждения удаления -->
-    <ConfirmDialog></ConfirmDialog>
-    <Toast />
   </div>
 </template>
 

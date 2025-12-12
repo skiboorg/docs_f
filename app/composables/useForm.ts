@@ -1,5 +1,7 @@
 import { reactive, ref } from "vue";
 import { FetchError } from 'ofetch';
+import { useToast } from 'primevue/usetoast';
+
 
 export default function useForm<
 	TFormData extends Record<string, unknown>,
@@ -19,6 +21,7 @@ export default function useForm<
 	const pending = ref(false);
 	const success = ref(false);
 
+	const toast = useToast()
 	// Вспомогательная функция для форматирования даты в YYYY-MM-DD
 	function formatDateToYYYYMMDD(date: Date): string {
 		const year = date.getFullYear();
@@ -101,8 +104,8 @@ export default function useForm<
 		} catch (e) {
 			if (e instanceof FetchError) {
 				const error = e.data as Error;
-				console.log(error.message);
-
+				console.log(error);
+				toast.add({ severity: 'error',summary:'Ошибка', detail: error, life: 3000 });
 				errors.value = error.error;
 			} else {
 				notice.value = 'Непредвиденная ошибка на сервере';
