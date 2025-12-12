@@ -89,7 +89,7 @@ const pageChange = async (e) => {
 
 
       <!-- Поиск -->
-      <div class="p-input-icon-left w-full">
+      <div class="p-input-icon-left w-full mb-4">
 
                 <InputText
                     fluid
@@ -119,20 +119,20 @@ const pageChange = async (e) => {
 
 
 
-    <!-- Легенда статусов -->
-    <div v-if="tableData" class="flex gap-4 mb-4 flex-wrap">
-      <div v-for="item in tableData.legend" class="flex flex-col items-center">
-        <i class="pi" :class="item.icon"
-           :style="{ color: item.color, fontSize: '14px' }"></i>
-        <p class="text-xs">{{ item.label }}</p>
-      </div>
-    </div>
+
 
     <!-- Таблица -->
     <Card>
 
       <template #content>
-
+        <!-- Легенда статусов -->
+        <div v-if="tableData" class="flex gap-4 mb-4 flex-wrap">
+          <div v-for="item in tableData.results.legend" class="flex flex-col items-center">
+            <i class="pi" :class="item.icon"
+               :style="{ color: item.color, fontSize: '14px' }"></i>
+            <p class="text-xs">{{ item.label }}</p>
+          </div>
+        </div>
         <DataTable :value="tableData?.results.rows" :loading="pending" responsiveLayout="scroll">
 
           <Column header="Компания" style="width: 250px">
