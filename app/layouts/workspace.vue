@@ -56,7 +56,7 @@ const flatMenuItems = ref([
     </div>
 
     <!-- Правая колонка - Рабочая область -->
-    <div class="flex-1">
+    <div class="flex-1 py-6">
        <slot/>
     </div>
   </div>

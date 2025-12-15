@@ -34,6 +34,12 @@ export function createDocumentRepository(appFetch: typeof $fetch){
                 body
             })
         },
+        upload_version(body){
+            return appFetch(`/api/document/documents/${body.get('uuid')}/upload_version/`,{
+                method: 'POST',
+                body
+            })
+        },
         delete_type(id){
             return appFetch(`/api/document/document-types/${id}/`,{
                 method: 'DELETE',

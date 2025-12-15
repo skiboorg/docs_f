@@ -123,7 +123,7 @@ watch(() => showAddCompanyDialog.value, (val) => {
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto">
+
     <!-- Заголовок -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 mb-2">Компании</h1>
@@ -296,7 +296,7 @@ watch(() => showAddCompanyDialog.value, (val) => {
       />
     </Dialog>
 
-  </div>
+
 </template>
 
 <style scoped>

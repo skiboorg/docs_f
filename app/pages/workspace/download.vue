@@ -50,7 +50,7 @@ const searchCompanies = debounce(async (event: any) => {
 }, 300)
 </script>
 <template>
-  <div class="min-h-screen bg-gray-50 p-4 ">
+  <div class="container">
     <div class="max-w-7xl mx-auto">
       <!-- Заголовок -->
       <div class="mb-8">

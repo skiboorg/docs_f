@@ -4,10 +4,8 @@ import type { ICompany } from "~/repository/company/types";
 import type { IDocumentShort, IVersion } from "~/repository/document/types";
 
 const { $api } = useNuxtApp();
+const toast = useToast()
 
-/* -------------------------------
-    ФИЛЬТРЫ
---------------------------------*/
 const search = ref("");
 const selectedStatuses = ref<string[]>([]);
 
@@ -21,14 +19,20 @@ const statusOptions = computed(() => {
   }));
 });
 
-/* -------------------------------
-    ПАГИНАЦИЯ
---------------------------------*/
+const fileupload = ref();
 const page = ref(1);
 const pageSize = ref(20);
 const pageSizeOptions = [20, 50, 100, 200];
 
 
+const newVersion = ref({
+  uuid:null,
+  file:null,
+  comment:null,
+  valid_from:null,
+  valid_until:null,
+
+})
 
 
 const {data:tableData,refresh, pending} = useHttpRequest(useAsyncData(()=>$api.company.summary({
@@ -40,7 +44,6 @@ const {data:tableData,refresh, pending} = useHttpRequest(useAsyncData(()=>$api.c
       }
     })
 ))
-const total = computed(() => tableData.value?.count ?? 0);
 
 /* -------------------------------
     Обновление при поиске / фильтрах
@@ -60,7 +63,6 @@ const modalDocuments = ref<IVersion[]>([]);
 const openModal = async (data: { company: ICompany; document: IDocumentShort }) => {
   modalData.value = data;
   modalVisible.value = true;
-
   const response = await $api.document.versions({
     query: {
       company: data.company.uuid,
@@ -77,18 +79,36 @@ const pageChange = async (e) => {
   pageSize.value = e.rows
   await refresh()
 }
+const {pending:loading, send } = useForm({
+  apiFn: $api.document.upload_version,
+  formData: newVersion.value,
+  asFormData: true,
+  onSuccess: async (res)=>{
+    toast.add({
+      severity: 'success',
+      summary: 'Успешно',
+      detail: 'Версия загружена',
+      life: 3000
+    })
+  }
+})
+
+const onUploadHandler = async (evt)=>{
+  console.log(evt);
+  newVersion.value.file = evt.files[0];
+}
+
+const submit = async () => {
+  newVersion.value.uuid = modalData.value.document.uuid;
+  await send()
+}
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto">
-    <!-- Заголовок -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 mb-2">Таблица документов</h1>
       <p class="text-gray-600 text-lg">Статус документов по всем компаниям</p>
     </div>
-
-
-      <!-- Поиск -->
       <div class="p-input-icon-left w-full mb-4">
 
                 <InputText
@@ -98,30 +118,6 @@ const pageChange = async (e) => {
                     placeholder="Поиск по ИНН или наименованию"
                 />
             </div>
-
-<!--      &lt;!&ndash; Фильтр по статусу &ndash;&gt;-->
-<!--      <MultiSelect-->
-<!--          v-model="selectedStatuses"-->
-<!--          :options="statusOptions"-->
-<!--          optionLabel="label"-->
-<!--          optionValue="value"-->
-<!--          placeholder="Статусы"-->
-<!--          display="chip"-->
-<!--          class="w-full"-->
-<!--      >-->
-<!--        <template #option="slot">-->
-<!--          <div class="flex items-center gap-2">-->
-<!--            <i :class="['pi', slot.option.icon]" :style="{ color: slot.option.color }"></i>-->
-<!--            {{ slot.option.label }}-->
-<!--          </div>-->
-<!--        </template>-->
-<!--      </MultiSelect>-->
-
-
-
-
-
-    <!-- Таблица -->
     <Card>
 
       <template #content>
@@ -165,53 +161,88 @@ const pageChange = async (e) => {
       </template>
     </Card>
 
-
-    <!-- Модальное окно -->
-    <Dialog v-model:visible="modalVisible" modal :show-header="false" :style="{ width: '450px' }">
+    <Dialog v-model:visible="modalVisible" modal :show-header="false" :style="{ width: '750px' }">
       <p class="font-medium text-lg pt-4">
         {{ modalData.company?.company_type?.name }} {{ modalData.company?.name }}
       </p>
-      <p class="text-gray-500">
+      <p class="text-gray-500 mb-4">
         {{ modalData.document?.document_type_name }} • ИНН {{ modalData.company?.inn }}
       </p>
+      <Tabs value="0">
+        <TabList>
+          <Tab value="0">История версий</Tab>
+          <Tab value="1">Загрузить новую</Tab>
+        </TabList>
+        <TabPanels>
+          <TabPanel value="0">
+            <div v-for="doc in modalDocuments" :key="doc.id"
+                 class="p-3 mt-3 border rounded-xl bg-gray-50">
+              <div class="space-y-1">
+                <div class="flex items-center gap-3">
+                  <p class="font-medium">Версия: {{ doc.version }}</p>
+                  <UIStatus :status="doc.status" />
+                  <p v-if="doc.is_current" class="text-xs bg-gray-200 px-2 py-1 rounded-xl">Текущая</p>
+                </div>
 
-      <div v-for="doc in modalDocuments" :key="doc.id"
-           class="p-3 mt-3 border rounded-xl bg-gray-50">
-        <div class="space-y-1">
-          <div class="flex items-center gap-3">
-            <p class="font-medium">Версия: {{ doc.version }}</p>
-            <UIStatus :status="doc.status" />
-            <p v-if="doc.is_current" class="text-xs bg-gray-200 px-2 py-1 rounded-xl">Текущая</p>
-          </div>
+                <p class="text-xs">
+                  <a :href="doc.file" target="_blank">{{ doc.file.split('/').pop() }}</a>
+                </p>
 
-          <p class="text-xs">
-            <a :href="doc.file" target="_blank">{{ doc.file.split('/').pop() }}</a>
-          </p>
+                <p class="text-xs">
+                  <i class="pi pi-calendar"></i>
+                  {{ new Date(doc.upload_date).toLocaleDateString() }}
+                </p>
 
-          <p class="text-xs">
-            <i class="pi pi-calendar"></i>
-            {{ new Date(doc.upload_date).toLocaleDateString() }}
-          </p>
+                <p class="text-xs">
+                  <i class="pi pi-user"></i>
+                  {{ doc.uploaded_by.email }}
+                </p>
 
-          <p class="text-xs">
-            <i class="pi pi-user"></i>
-            {{ doc.uploaded_by.email }}
-          </p>
+                <p class="text-xs">
+                  Действует с:
+                  {{ new Date(doc.valid_from).toLocaleDateString() }}
+                  • до:
+                  {{ new Date(doc.valid_until).toLocaleDateString() }}
+                </p>
 
-          <p class="text-xs">
-            Действует с:
-            {{ new Date(doc.valid_from).toLocaleDateString() }}
-            • до:
-            {{ new Date(doc.valid_until).toLocaleDateString() }}
-          </p>
+                <p class="text-xs">Размер: {{ doc.file_size }}</p>
+              </div>
+            </div>
+          </TabPanel>
+          <TabPanel value="1">
+            <template v-if="modalData.document">
+              <p class="font-medium -lg mb-2">Выберите файл *</p>
+              <FileUpload ref="fileupload" mode="basic"
+                          name="demo[]" url="/api/upload"
+                          accept="image/*"
+                          :maxFileSize="1000000"
+                          @select="onUploadHandler"
+                          class="mb-3"
+                          chooseLabel="Выбрать" />
+              <p class="font-medium  mb-2">Комментарий (необязательно)</p>
 
-          <p class="text-xs">Размер: {{ doc.file_size }}</p>
-        </div>
-      </div>
+              <Textarea fluid class="mb-3" v-model="newVersion.comment" placeholder="Примечание к версии"/>
+              <p class="font-medium  mb-1">Срок действия документа</p>
+              <p class="text-gray-400 mb-2"> Укажите период, в течение которого документ действителен (необязательно)</p>
+              <div class="flex gap-3 mb-3">
+                <DatePicker v-model="newVersion.valid_from"/>
+                <DatePicker v-model="newVersion.valid_until"/>
+              </div>
+              <Button :loading="loading" :disabled="!newVersion.file" fluid label="Загрузить" @click="submit"/>
+            </template>
+            <template v-else>
+              <p class="text-center text-red-500 font-medium">У документа нет типа, загрузка невозможна</p>
+            </template>
+
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
+
 
       <template #footer>
         <Button label="Закрыть" @click="modalVisible = false" />
       </template>
+
     </Dialog>
-  </div>
+
 </template>

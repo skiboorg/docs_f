@@ -1,6 +1,100 @@
+<script setup>
+const {$api} = useNuxtApp()
+const fileInput = ref(null)
+const selectedFile = ref(null)
+const isDragOver = ref(false)
+const isUploading = ref(false)
+
+const onFileSelect = (event) => {
+  const file = event.target.files[0]
+  if (file && validateFileType(file)) {
+    selectedFile.value = file
+  }
+}
+
+const formData = ref({
+  file: null,
+})
+
+const onDragOver = () => {
+  isDragOver.value = true
+}
+
+const onDragLeave = () => {
+  isDragOver.value = false
+}
+
+const onDrop = (event) => {
+  isDragOver.value = false
+  const file = event.dataTransfer.files[0]
+  if (file && validateFileType(file)) {
+    selectedFile.value = file
+  }
+}
+
+const validateFileType = (file) => {
+  const validExtensions = ['.zip', '.rar']
+  const fileName = file.name.toLowerCase()
+  const isValid = validExtensions.some(ext => fileName.endsWith(ext))
+
+  if (!isValid) {
+    alert('Пожалуйста, выберите архивный файл (ZIP, RAR или 7z)')
+    return false
+  }
+
+  return true
+}
+
+const removeFile = () => {
+  selectedFile.value = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+const { pending, send, form } = useForm({
+  apiFn: $api.document.upload,
+  formData: formData.value,
+  asFormData: true,
+  onSuccess: async (res)=>{
+    console.log(res);
+
+    //document.location = '/'
+  }
+})
+
+const uploadAndProcess = async () => {
+  if (!selectedFile.value) return
+
+
+  isUploading.value = true
+  console.log(selectedFile.value)
+  formData.value.file = selectedFile.value
+  try {
+    // Имитация загрузки файла
+    await send()
+
+    alert('Архив успешно загружен и обрабатывается')
+    removeFile()
+  } catch (error) {
+    console.error('Ошибка загрузки:', error)
+    alert('Произошла ошибка при загрузке файла')
+  } finally {
+    isUploading.value = false
+  }
+}
+</script>
 <template>
-  <div class="min-h-screen bg-gray-50 p-4 md:p-8">
-    <div class="max-w-4xl mx-auto">
+
+    <div class="container">
       <!-- Заголовок -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">
@@ -168,100 +262,5 @@
         </div>
       </div>
     </div>
-  </div>
+
 </template>
-
-<script setup>
-const {$api} = useNuxtApp()
-const fileInput = ref(null)
-const selectedFile = ref(null)
-const isDragOver = ref(false)
-const isUploading = ref(false)
-
-const onFileSelect = (event) => {
-  const file = event.target.files[0]
-  if (file && validateFileType(file)) {
-    selectedFile.value = file
-  }
-}
-
-const formData = ref({
-  file: null,
-})
-
-const onDragOver = () => {
-  isDragOver.value = true
-}
-
-const onDragLeave = () => {
-  isDragOver.value = false
-}
-
-const onDrop = (event) => {
-  isDragOver.value = false
-  const file = event.dataTransfer.files[0]
-  if (file && validateFileType(file)) {
-    selectedFile.value = file
-  }
-}
-
-const validateFileType = (file) => {
-  const validExtensions = ['.zip', '.rar']
-  const fileName = file.name.toLowerCase()
-  const isValid = validExtensions.some(ext => fileName.endsWith(ext))
-
-  if (!isValid) {
-    alert('Пожалуйста, выберите архивный файл (ZIP, RAR или 7z)')
-    return false
-  }
-
-  return true
-}
-
-const removeFile = () => {
-  selectedFile.value = null
-  if (fileInput.value) {
-    fileInput.value.value = ''
-  }
-}
-
-const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
-const { pending, send, form } = useForm({
-  apiFn: $api.document.upload,
-  formData: formData.value,
-  asFormData: true,
-  onSuccess: async (res)=>{
-    console.log(res);
-
-    //document.location = '/'
-  }
-})
-
-const uploadAndProcess = async () => {
-  if (!selectedFile.value) return
-
-
-  isUploading.value = true
-  console.log(selectedFile.value)
-  formData.value.file = selectedFile.value
-  try {
-    // Имитация загрузки файла
-    await send()
-
-    alert('Архив успешно загружен и обрабатывается')
-    removeFile()
-  } catch (error) {
-    console.error('Ошибка загрузки:', error)
-    alert('Произошла ошибка при загрузке файла')
-  } finally {
-    isUploading.value = false
-  }
-}
-</script>
