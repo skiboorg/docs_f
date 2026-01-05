@@ -64,6 +64,13 @@ export function createDocumentRepository(appFetch: typeof $fetch){
             return appFetch(`/api/document/document-versions/${params.uuid}/${params.action}/`,{
                 method: 'POST'
             })
+        },
+        version_update(body){
+            return appFetch(`/api/document/document-versions/${body.uuid}/`,{
+                method: 'PATCH',
+                body
+            })
         }
+
     }
 }

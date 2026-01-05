@@ -79,7 +79,7 @@ const handleFormSubmit = async (companyData: any) => {
       const newCompany = await $api.company.create(companyData)
       toast.add({ severity: 'success', summary: 'Успешно', detail: 'Компания создана', life: 3000 })
       companies.value.unshift(newCompany)
-      refresh() // Обновляем общее количество
+      await refresh() // Обновляем общее количество
     }
 
     showCompanyDialog.value = false

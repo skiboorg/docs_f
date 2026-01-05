@@ -20,6 +20,9 @@ const statusOptions = computed(() => {
 });
 
 const fileupload = ref();
+const showAddCompanyDialog = ref(false);
+const companyInfoVisible = ref(false);
+const companyInfo = ref(false);
 const page = ref(1);
 const pageSize = ref(20);
 const pageSizeOptions = [20, 50, 100, 200];
@@ -102,12 +105,43 @@ const submit = async () => {
   newVersion.value.uuid = modalData.value.document.uuid;
   await send()
 }
+
+const handleFormSubmit = async (companyData: any) => {
+  console.log(companyData)
+  try {
+
+      const newCompany = await $api.company.create(companyData)
+      toast.add({ severity: 'success', summary: 'Успешно', detail: 'Компания создана', life: 3000 })
+
+      await refresh() // Обновляем общее количество
+
+    showAddCompanyDialog.value = false
+
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Ошибка', detail: 'Не удалось сохранить компанию', life: 5000 })
+    console.error('Ошибка сохранения:', err)
+  }
+}
+
+
+const selectRow = (data) => {
+  console.log(data)
+  companyInfo.value=data
+  companyInfoVisible.value = true
+};
 </script>
 
 <template>
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Таблица документов</h1>
-      <p class="text-gray-600 text-lg">Статус документов по всем компаниям</p>
+    <div class="mb-8 flex items-center justify-between">
+      <div class="">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Таблица документов</h1>
+        <p class="text-gray-600 text-lg">Статус документов по всем компаниям</p>
+      </div>
+      <UIBtnAdd @click="showAddCompanyDialog = true"
+                label="Добавить компанию"
+                icon="pi pi-plus"
+                :loading="pending"/>
+
     </div>
       <div class="p-input-icon-left w-full mb-4">
 
@@ -154,7 +188,11 @@ const submit = async () => {
               </div>
             </template>
           </Column>
-
+          <Column class="w-24 !text-end">
+            <template #body="{ data }">
+              <Button icon="pi pi-eye" @click="selectRow(data)" severity="secondary" text ></Button>
+            </template>
+          </Column>
         </DataTable>
         <Paginator :rows="pageSize" @page="pageChange" :totalRecords="tableData?.count" :rowsPerPageOptions="pageSizeOptions"/>
 
@@ -244,5 +282,31 @@ const submit = async () => {
       </template>
 
     </Dialog>
+  <Dialog
+      v-model:visible="showAddCompanyDialog"
+      header="Добавить компанию"
+      :style="{ width: '600px' }"
+      :modal="true"
+      :closable="false"
+  >
+    <ModalCompany
+        :loading="pending"
+        :is_edit_mode="false"
+        @submit="handleFormSubmit"
+        @cancel="showAddCompanyDialog = false"
+    />
+  </Dialog>
+  <Dialog v-model:visible="companyInfoVisible" modal header="Информация о компании" :style="{ width: '600px' }">
+<!--    "id": 5,-->
+<!--    "uuid": "c52522e2-56d6-4f22-8cc6-80f221d169f8",-->
+<!--    "name": "new6",-->
+<!--    "inn": "213123123213",-->
+<!--    "company_type": "ОАО"-->
+    <p>ИНН: {{companyInfo.company?.inn}}</p>
+    <p>Название: {{companyInfo.company?.company_type}} {{companyInfo.company?.name}}</p>
 
+    <p>Директор: {{companyInfo.company?.director_name}}</p>
+    <p>Уст. капитал: {{companyInfo.company?.authorized_capital}}</p>
+    <p>Создана: {{companyInfo.company?.founding_date}}</p>
+  </Dialog>
 </template>

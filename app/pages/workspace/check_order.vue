@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { debounce } from 'lodash-es'
-import type {IDocumentResponse, IDocumentType, IVersionResponseResult} from "~/repository/document/types";
+import type {IDocumentType, IVersionResponseResult} from "~/repository/document/types";
 
 const {$api} = useNuxtApp()
 
 const companies = ref([])
 const toast = useToast()
 const selectedCompany = ref(null)
+const newType = ref(null)
 
 const filters = ref({
   page: 1,
@@ -81,6 +82,37 @@ watch(selectedType,async ()=>{
   filters.value.document_type_ids = selectedType.value.join(",")
   await refresh()
 })
+
+const groupedByCompany = computed(() => {
+  const data = version_response.value?.results;
+
+  if (!data || !Array.isArray(data)) return [];
+
+  return Object.values(
+      data.reduce((acc: any, item: any) => {
+        const companyName = item.document.company_name;
+
+        if (!acc[companyName]) {
+          acc[companyName] = {
+            company_name: companyName,
+            documents: []
+          };
+        }
+
+        acc[companyName].documents.push(item);
+        return acc;
+      }, {})
+  );
+});
+
+const newTypeSelected = async (doc) => {
+  await $api.document.version_update({
+    uuid: doc.uuid,
+    type: doc.new_type,
+    name: doc.document.name
+  })
+  await refresh()
+}
 </script>
 <template>
   <div class="container ">
@@ -90,6 +122,8 @@ watch(selectedType,async ()=>{
         <h1 class="text-3xl font-bold text-gray-900 mb-2">
           Очередь проверки
         </h1>
+
+
         <p class="text-gray-600">
           Документы, ожидающие утверждения (0)
         </p>
@@ -128,41 +162,90 @@ watch(selectedType,async ()=>{
         </div>
         <div class="col-span-8">
           <div class="space-y-4">
-            <div v-for="doc in version_response?.results" :key="doc.id" class="p-3 mb-2 border rounded-xl bg-gray-50 grid grid-cols-12" >
+            <div v-for="company in groupedByCompany" :key="company.company_name" class="p-3 mb-2 border rounded-xl bg-gray-50">
+              <h3 class="text-2xl">{{ company.company_name }}</h3>
 
-              <div class="col-span-7  space-y-1">
-                <p class="font-medium">{{doc.document.company_name}}</p>
+              <div v-for="doc in company.documents" :key="doc.uuid" class="grid grid-cols-12 border-b pb-2 mb-2">
+                <div class="col-span-7  space-y-1">
 
-                <div class="flex items-center gap-3">
-                  <p class="font-medium">{{doc.document.name}} Версия: {{ doc.version }} </p>
-                  <UIStatus :status="doc.status" />
-                  <p class="text-xs rounded-xl py-1 px-2 bg-gray-200" v-if="doc.is_current">Текущая</p>
+                  <p v-if="doc.document.document_type_name" class="font-medium">{{doc.document.document_type_name}}  </p>
+                  <Select v-else
+                          :options="document_types"
+                          v-model="doc.new_type"
+                          size="small"
+                          option-label="name"
+                          @update:model-value="newTypeSelected(doc)"
+                          placeholder="Выберите тип"/>
+                  <div class="flex items-center gap-3">
+
+                    <p class="font-medium"><InputText size="small" @blur="newTypeSelected(doc)" v-model="doc.document.name"/>  Версия: {{ doc.version }} </p>
+<!--                    <UIStatus :status="doc.status" />-->
+                    <p class="text-xs rounded-xl py-1 px-2 bg-gray-200" v-if="doc.is_current">Текущая</p>
+                  </div>
+                  <p class="text-xs">{{doc.file?.split('/').reverse()[0]}}</p>
+                  <p class="text-xs"><i class="pi pi-calendar"></i> {{new Date(doc.upload_date).toLocaleDateString()}}</p>
+                  <p class="text-xs"><i class="pi pi-user"></i> {{doc.uploaded_by.email}}</p>
+                  <p class="text-xs"> Действует с: {{ new Date(doc.valid_from).toLocaleDateString() }} • До: {{ new Date(doc.valid_until).toLocaleDateString() }}</p>
+                  <p class="text-xs">Размер: {{doc.file_size}}</p>
+                  <p class="text-xs">Утверждено: {{doc.reviewed_by?.email}} {{ new Date(doc.review_date).toLocaleDateString() }}</p>
+
                 </div>
-                <p class="text-xs">{{doc.file?.split('/').reverse()[0]}}</p>
-                <p class="text-xs"><i class="pi pi-calendar"></i> {{new Date(doc.upload_date).toLocaleDateString()}}</p>
-                <p class="text-xs"><i class="pi pi-user"></i> {{doc.uploaded_by.email}}</p>
-                <p class="text-xs"> Действует с: {{ new Date(doc.valid_from).toLocaleDateString() }} • До: {{ new Date(doc.valid_until).toLocaleDateString() }}</p>
-                <p class="text-xs">Размер: {{doc.file_size}}</p>
-                <p class="text-xs">Утверждено: {{doc.reviewed_by?.email}} {{ new Date(doc.review_date).toLocaleDateString() }}</p>
+                <div class="col-span-5 flex items-start gap-2 justify-end">
 
-              </div>
-              <div class="col-span-5 flex items-start gap-2 justify-end">
+                  <a target="_blank" :href="doc.file">
+                    <Button text severity="secondary" icon="pi pi-eye"/>
+                  </a>
+                  <UIBtnConfirmBtn severity="success"
+                                   message="Принять документ?"
+                                   :loading="loading"
+                                   icon="pi pi-check" @confirm="vesionAction('approve',doc.uuid)"/>
 
-                <a target="_blank" :href="doc.file">
-                  <Button text severity="secondary" icon="pi pi-eye"/>
-                </a>
-                <UIBtnConfirmBtn severity="success"
-                                 message="Принять документ?"
-                                 :loading="loading"
-                                 icon="pi pi-check" @confirm="vesionAction('approve',doc.uuid)"/>
+                  <UIBtnConfirmBtn message="Отклонить документ?"
+                                   :loading="loading"
+                                   icon="pi pi-ban"
+                                   @confirm="vesionAction('reject',doc.uuid)"/>
 
-                <UIBtnConfirmBtn message="Отклонить документ?"
-                                 :loading="loading"
-                                 icon="pi pi-ban"
-                                 @confirm="vesionAction('reject',doc.uuid)"/>
-
+                </div>
               </div>
             </div>
+
+
+<!--            <div v-for="doc in version_response?.results" :key="doc.id" class="p-3 mb-2 border rounded-xl bg-gray-50 grid grid-cols-12" >-->
+
+<!--              <div class="col-span-7  space-y-1">-->
+<!--                <p class="font-medium">{{doc.document.company_name}}</p>-->
+<!--                <p class="font-medium">{{doc.document.document_type_name}}  </p>-->
+<!--                <div class="flex items-center gap-3">-->
+
+<!--                  <p class="font-medium">{{doc.document.name}} Версия: {{ doc.version }} </p>-->
+<!--                  <UIStatus :status="doc.status" />-->
+<!--                  <p class="text-xs rounded-xl py-1 px-2 bg-gray-200" v-if="doc.is_current">Текущая</p>-->
+<!--                </div>-->
+<!--                <p class="text-xs">{{doc.file?.split('/').reverse()[0]}}</p>-->
+<!--                <p class="text-xs"><i class="pi pi-calendar"></i> {{new Date(doc.upload_date).toLocaleDateString()}}</p>-->
+<!--                <p class="text-xs"><i class="pi pi-user"></i> {{doc.uploaded_by.email}}</p>-->
+<!--                <p class="text-xs"> Действует с: {{ new Date(doc.valid_from).toLocaleDateString() }} • До: {{ new Date(doc.valid_until).toLocaleDateString() }}</p>-->
+<!--                <p class="text-xs">Размер: {{doc.file_size}}</p>-->
+<!--                <p class="text-xs">Утверждено: {{doc.reviewed_by?.email}} {{ new Date(doc.review_date).toLocaleDateString() }}</p>-->
+
+<!--              </div>-->
+<!--              <div class="col-span-5 flex items-start gap-2 justify-end">-->
+
+<!--                <a target="_blank" :href="doc.file">-->
+<!--                  <Button text severity="secondary" icon="pi pi-eye"/>-->
+<!--                </a>-->
+<!--                <UIBtnConfirmBtn severity="success"-->
+<!--                                 message="Принять документ?"-->
+<!--                                 :loading="loading"-->
+<!--                                 icon="pi pi-check" @confirm="vesionAction('approve',doc.uuid)"/>-->
+
+<!--                <UIBtnConfirmBtn message="Отклонить документ?"-->
+<!--                                 :loading="loading"-->
+<!--                                 icon="pi pi-ban"-->
+<!--                                 @confirm="vesionAction('reject',doc.uuid)"/>-->
+
+<!--              </div>-->
+<!--            </div>-->
           </div>
 
         </div>
