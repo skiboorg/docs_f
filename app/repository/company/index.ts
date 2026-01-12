@@ -10,7 +10,8 @@ export function createCompanyRepository(appFetch: typeof $fetch){
             console.log(params.query)
             return appFetch<ICompanyListResponse>(`/api/company/companies/?${formattedQueryString}`)
         }
-        ,summary(params:{
+        ,
+        summary(params:{
             query: Record<string, any>,
         }){
             const formattedQueryString = getQueryString(params.query)
@@ -36,5 +37,11 @@ export function createCompanyRepository(appFetch: typeof $fetch){
                 body
             })
         },
+        download_docs(id) {
+            return appFetch(`/api/company/companies/${id}/download_docs/`, {
+                responseType: 'arrayBuffer'
+            })
+        }
+
     }
 }

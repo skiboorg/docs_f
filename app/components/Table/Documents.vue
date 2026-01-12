@@ -23,6 +23,7 @@ const fileupload = ref();
 const showAddCompanyDialog = ref(false);
 const companyInfoVisible = ref(false);
 const companyInfo = ref(false);
+
 const page = ref(1);
 const pageSize = ref(20);
 const pageSizeOptions = [20, 50, 100, 200];
@@ -129,6 +130,36 @@ const selectRow = (data) => {
   companyInfo.value=data
   companyInfoVisible.value = true
 };
+
+const download_docs = async (data) => {
+  console.log(data)
+  loading.value = true
+  try{
+
+    const raw = await $api.company.download_docs(data.company.id)
+
+// 🔥 Оборачиваем в настоящий Blob
+    const blob = new Blob([raw], { type: 'application/zip' })
+
+    if (blob) {
+      const url = window.URL.createObjectURL(blob)
+
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${data.company.name}.zip`
+
+      document.body.appendChild(a)
+      a.click()
+
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    }
+  }catch(error){
+    console.log(error)
+  }finally{
+    loading.value = false
+  }
+}
 </script>
 
 <template>
@@ -139,8 +170,9 @@ const selectRow = (data) => {
       </div>
       <UIBtnAdd @click="showAddCompanyDialog = true"
                 label="Добавить компанию"
+
                 icon="pi pi-plus"
-                :loading="pending"/>
+                :loading="pending || loading"/>
 
     </div>
       <div class="p-input-icon-left w-full mb-4">
@@ -190,7 +222,11 @@ const selectRow = (data) => {
           </Column>
           <Column class="w-24 !text-end">
             <template #body="{ data }">
-              <Button icon="pi pi-eye" @click="selectRow(data)" severity="secondary" text ></Button>
+              <div class="flex gap-2">
+                <Button :loading="loading" icon="pi pi-eye" @click="selectRow(data)" severity="secondary" text ></Button>
+                <Button :loading="loading" icon="pi pi-download" @click="download_docs(data)" severity="secondary" text ></Button>
+              </div>
+
             </template>
           </Column>
         </DataTable>
