@@ -163,7 +163,7 @@ const download_docs = async (data) => {
 </script>
 
 <template>
-    <div class="mb-8 flex items-center justify-between">
+    <div class="mb-8 grid grid-cols-1 gap-3 md:flex items-center justify-between">
       <div class="">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Таблица документов</h1>
         <p class="text-gray-600 text-lg">Статус документов по всем компаниям</p>
@@ -215,8 +215,9 @@ const download_docs = async (data) => {
                     @click="openModal({
                                         company: data.documents[col.key].company,
                                         document: data.documents[col.key].document
-                                    })"
-                ></i>
+                                    })">
+
+                </i>
               </div>
             </template>
           </Column>
@@ -226,12 +227,10 @@ const download_docs = async (data) => {
                 <Button :loading="loading" icon="pi pi-eye" @click="selectRow(data)" severity="secondary" text ></Button>
                 <Button :loading="loading" icon="pi pi-download" @click="download_docs(data)" severity="secondary" text ></Button>
               </div>
-
             </template>
           </Column>
         </DataTable>
         <Paginator :rows="pageSize" @page="pageChange" :totalRecords="tableData?.count" :rowsPerPageOptions="pageSizeOptions"/>
-
       </template>
     </Card>
 

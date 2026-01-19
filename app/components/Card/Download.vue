@@ -10,14 +10,14 @@ const props = defineProps<
 </script>
 
 <template>
-<div class="bg-white border rounded-xl p-4 flex gap-4 items-start">
-  <div >
+<div class="bg-white border rounded-xl p-4 grid grid-cols-1 md:flex gap-4 items-start">
+  <div class="hidden md:block">
     <i class="pi pi-copy text-2xl"></i>
   </div>
-  <div class="grow-[1]">
-    <div class="flex gap-3 mb-2">
+  <div class="grow-[0] md:grow-[1]">
+    <div class="grid grid-cols-1 md:flex flex-wrap gap-3 mb-2">
       <p class="font-medium text-lg">{{item.name}} ({{item.document_type_name}})</p>
-      <Chip class="bg-green-400 p-1 text-sm items-center" label="Утвержден" icon="pi pi-check" />
+      <Chip class="bg-green-400 p-1 text-sm items-center inline-flex" label="Утвержден" icon="pi pi-check" />
     </div>
     <div class="flex gap-2 items-center text-gray-500 mb-2">
       <i class="pi pi-building "></i>
@@ -29,7 +29,7 @@ const props = defineProps<
     <div class="">
       <p class="mb-2">Версии</p>
       <div v-for="version in item.versions">
-        <p class="text-sm text-gray-500 mb-2">{{version.file.split('/').reverse()[0]}}</p>
+        <p class="text-sm text-gray-500 mb-2 break-words text-wrap whitespace-pre-wrap w-[90%] truncate">{{decodeURIComponent(version.file.split('/').pop() || '')}}</p>
         <p class="text-sm text-gray-500">{{new Date(version.upload_date).toLocaleDateString()}} • {{version.file_size}}</p>
       </div>
     </div>

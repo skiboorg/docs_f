@@ -61,8 +61,8 @@ const searchCompanies = debounce(async (event: any) => {
           Загрузка документов
         </p>
       </div>
-      <div class="grid grid-cols-12 gap-5">
-        <div class="col-span-4">
+      <div class="grid grid-cols-1  md:grid-cols-12 gap-5">
+        <div class="col-span-12 md:col-span-4">
           <Card>
             <template #title>
               <p>Фильтры</p>
@@ -98,7 +98,7 @@ const searchCompanies = debounce(async (event: any) => {
 
 
         </div>
-        <div class="col-span-8">
+        <div class="col-span-12 md:col-span-8">
           <div class="space-y-4">
             <CardDownload v-for="item in document_response?.results" :item="item"/>
           </div>

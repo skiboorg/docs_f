@@ -128,8 +128,8 @@ const newTypeSelected = async (doc) => {
           Документы, ожидающие утверждения (0)
         </p>
       </div>
-      <div class="grid grid-cols-12 gap-5">
-        <div class="col-span-4">
+      <div class="grid grid-cols-1  md:grid-cols-12 gap-5">
+        <div class="col-span-12 md:col-span-4">
           <Card>
             <template #title>
               <p>Фильтры</p>
@@ -160,7 +160,7 @@ const newTypeSelected = async (doc) => {
             </template>
           </Card>
         </div>
-        <div class="col-span-8">
+        <div class="col-span-12 md:col-span-8">
           <div class="space-y-4">
             <div v-for="company in groupedByCompany" :key="company.company_name" class="p-3 mb-2 border rounded-xl bg-gray-50">
               <h3 class="text-2xl">{{ company.company_name }}</h3>
@@ -169,6 +169,7 @@ const newTypeSelected = async (doc) => {
                 <div class="col-span-7  space-y-1">
 
                   <p v-if="doc.document.document_type_name" class="font-medium">{{doc.document.document_type_name}}  </p>
+
                   <Select v-else
                           :options="document_types"
                           v-model="doc.new_type"
@@ -178,16 +179,16 @@ const newTypeSelected = async (doc) => {
                           placeholder="Выберите тип"/>
                   <div class="flex items-center gap-3">
 
-                    <p class="font-medium"><InputText size="small" @blur="newTypeSelected(doc)" v-model="doc.document.name"/>  Версия: {{ doc.version }} </p>
+                    <p class="font-medium"><InputText size="small" @blur="newTypeSelected(doc)" v-model="doc.document.name"  placeholder="Введите Имя файла"/>  Версия: {{ doc.version }} </p>
 <!--                    <UIStatus :status="doc.status" />-->
                     <p class="text-xs rounded-xl py-1 px-2 bg-gray-200" v-if="doc.is_current">Текущая</p>
                   </div>
-                  <p class="text-xs">{{doc.file?.split('/').reverse()[0]}}</p>
+                  <p class="text-xs">{{decodeURIComponent(doc.file?.split('/').pop() || '')}}</p>
                   <p class="text-xs"><i class="pi pi-calendar"></i> {{new Date(doc.upload_date).toLocaleDateString()}}</p>
                   <p class="text-xs"><i class="pi pi-user"></i> {{doc.uploaded_by.email}}</p>
-                  <p class="text-xs"> Действует с: {{ new Date(doc.valid_from).toLocaleDateString() }} • До: {{ new Date(doc.valid_until).toLocaleDateString() }}</p>
+
                   <p class="text-xs">Размер: {{doc.file_size}}</p>
-                  <p class="text-xs">Утверждено: {{doc.reviewed_by?.email}} {{ new Date(doc.review_date).toLocaleDateString() }}</p>
+
 
                 </div>
                 <div class="col-span-5 flex items-start gap-2 justify-end">

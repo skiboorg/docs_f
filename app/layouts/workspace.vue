@@ -2,39 +2,23 @@
 
 const settingsStore = useSettingsStore()
 const {menuItems} = storeToRefs(settingsStore)
-
-// Простое одноуровневое меню
-const flatMenuItems = ref([
-  {
-    key: 'dashboard',
-    label: 'Дашборд',
-    icon: 'pi pi-home'
-  },
-  {
-    key: 'profile',
-    label: 'Профиль',
-    icon: 'pi pi-user'
-  },
-  {
-    key: 'settings',
-    label: 'Настройки',
-    icon: 'pi pi-cog'
-  },
-  {
-    key: 'messages',
-    label: 'Сообщения',
-    icon: 'pi pi-envelope'
-  }
-])
-
+const menuActive = ref(false)
+const route = useRoute()
+watch(
+    () => route.fullPath, // отслеживание изменения полного пути маршрута
+    (newPath, oldPath) => {
+      menuActive.value = false;
+    },
+    { immediate: true } // опция для немедленного выполнения коллбэка
+);
 
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
+  <div class="min-h-screen bg-gray-50 block md:flex">
 
     <!-- Левая колонка - Навигационное меню -->
-    <div class="w-80 bg-white shadow-lg border-r border-gray-200">
+    <div class="hidden md:block w-80 bg-white shadow-lg border-r border-gray-200">
       <div class="p-6 border-b border-gray-200">
         <h2 class="text-xl font-semibold text-gray-800">Навигация</h2>
       </div>
@@ -54,12 +38,34 @@ const flatMenuItems = ref([
 
       </div>
     </div>
+    <div class="flex md:hidden bg-white shadow-lg border-r border-gray-200  p-1  justify-end">
 
+      <Button icon="pi pi-bars" text @click="menuActive = true"/>
+
+    </div>
     <!-- Правая колонка - Рабочая область -->
     <div class="flex-1 py-6">
        <slot/>
     </div>
   </div>
+  <Drawer v-model:visible="menuActive" header=" " position="right">
+    <div class="p-4 space-y-2">
+
+      <nuxt-link
+          v-for="item in menuItems"
+          :key="item.id"
+          class="flex items-center p-3 rounded-lg hover:bg-blue-300/20 transition-colors cursor-pointer  focus:outline-none"
+          exact-active-class="bg-blue-300"
+          :to="item.page.url"
+      >
+        <i :class="item.icon" class="mr-3 text-gray-600"></i>
+        <span class="font-medium">{{ item?.page.label }}</span>
+      </nuxt-link>
+
+    </div>
+
+
+  </Drawer>
 </template>
 
 

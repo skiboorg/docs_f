@@ -119,11 +119,12 @@ watch(() => showAddDialog.value, (val) => {
     <!-- Панель действий -->
     <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
       <div class="flex justify-between items-center">
-        <div class="flex items-center space-x-4">
+        <div class="grid grid-cols-1 md:flex items-center w-full md:space-x-4 gap-2">
           <InputText
               v-model="searchQuery"
+              class="flex-grow"
               placeholder="Поиск по названию, тегам или типам компаний..."
-              class="w-80"
+
           />
 
 
@@ -131,11 +132,12 @@ watch(() => showAddDialog.value, (val) => {
           <div class="text-sm text-gray-500">
             Найдено: {{ filteredDocumentTypes?.length || 0 }} из {{ document_types?.length || 0 }}
           </div>
+          <UIBtnAdd @click="showAddDialog = true"
+                    label="Добавить тип"
+                    icon="pi pi-plus"
+                    :loading="pending"/>
         </div>
-        <UIBtnAdd @click="showAddDialog = true"
-                  label="Добавить тип"
-                  icon="pi pi-plus"
-                  :loading="pending"/>
+
 
       </div>
     </div>
