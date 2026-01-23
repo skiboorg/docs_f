@@ -70,6 +70,13 @@ export function createDocumentRepository(appFetch: typeof $fetch){
                 method: 'PATCH',
                 body
             })
+        },
+        download_versions(version_uuids: string[]) {
+            return appFetch(`/api/document/document-versions/download-zip/`, {
+                method: 'POST',
+                body: version_uuids,
+                responseType: 'arrayBuffer'
+            })
         }
 
     }

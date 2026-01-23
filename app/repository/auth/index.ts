@@ -24,8 +24,8 @@ export function createAuthRepository(appFetch: typeof $fetch){
         setUser(response)
       }catch(error){
         console.log(error)
-        //authCookie.value = null
-        //window.location.reload()
+        authCookie.value = null
+        window.location.reload()
       }
 
     }

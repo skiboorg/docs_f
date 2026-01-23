@@ -88,8 +88,15 @@ const groupedByCompany = computed(() => {
 
   if (!data || !Array.isArray(data)) return [];
 
+  // Инициализируем comment и new_type для каждого документа
+  const processedData = data.map(item => ({
+    ...item,
+    comment: item.comment || '',
+    new_type: item.new_type || null
+  }));
+
   return Object.values(
-      data.reduce((acc: any, item: any) => {
+      processedData.reduce((acc: any, item: any) => {
         const companyName = item.document.company_name;
 
         if (!acc[companyName]) {
@@ -106,10 +113,11 @@ const groupedByCompany = computed(() => {
 });
 
 const newTypeSelected = async (doc) => {
+  console.log(doc)
   await $api.document.version_update({
     uuid: doc.uuid,
     type: doc.new_type,
-    name: doc.document.name
+    comment: doc.comment
   })
   await refresh()
 }
@@ -179,7 +187,9 @@ const newTypeSelected = async (doc) => {
                           placeholder="Выберите тип"/>
                   <div class="flex items-center gap-3">
 
-                    <p class="font-medium"><InputText size="small" @blur="newTypeSelected(doc)" v-model="doc.document.name"  placeholder="Введите Имя файла"/>  Версия: {{ doc.version }} </p>
+<!--                    <p class="font-medium">-->
+
+<!--                      Версия: {{ doc.version }} </p>-->
 <!--                    <UIStatus :status="doc.status" />-->
                     <p class="text-xs rounded-xl py-1 px-2 bg-gray-200" v-if="doc.is_current">Текущая</p>
                   </div>
@@ -189,19 +199,21 @@ const newTypeSelected = async (doc) => {
 
                   <p class="text-xs">Размер: {{doc.file_size}}</p>
 
+                  <Textarea fluid size="small" @blur="newTypeSelected(doc)" v-model="doc.comment"  placeholder="Введите коментарий"/>
 
                 </div>
+
                 <div class="col-span-5 flex items-start gap-2 justify-end">
 
                   <a target="_blank" :href="doc.file">
                     <Button text severity="secondary" icon="pi pi-eye"/>
                   </a>
-                  <UIBtnConfirmBtn severity="success"
+                  <UIBtnConfirmBtn v-if="doc.document.document_type_name" severity="success"
                                    message="Принять документ?"
                                    :loading="loading"
                                    icon="pi pi-check" @confirm="vesionAction('approve',doc.uuid)"/>
 
-                  <UIBtnConfirmBtn message="Отклонить документ?"
+                  <UIBtnConfirmBtn v-if="doc.document.document_type_name" message="Отклонить документ?"
                                    :loading="loading"
                                    icon="pi pi-ban"
                                    @confirm="vesionAction('reject',doc.uuid)"/>
