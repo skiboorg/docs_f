@@ -1,5 +1,5 @@
 <script setup lang="ts">
-
+const {$api} = useNuxtApp()
 const settingsStore = useSettingsStore()
 const {menuItems} = storeToRefs(settingsStore)
 const menuActive = ref(false)
@@ -18,12 +18,12 @@ watch(
   <div class="min-h-screen bg-gray-50 block md:flex">
 
     <!-- Левая колонка - Навигационное меню -->
-    <div class="hidden md:block w-80 bg-white shadow-lg border-r border-gray-200">
+    <div class="hidden  md:block w-80 bg-white shadow-lg border-r border-gray-200 sticky top-0 h-svh">
       <div class="p-6 border-b border-gray-200">
         <h2 class="text-xl font-semibold text-gray-800">Навигация</h2>
       </div>
 
-      <div class="p-4 space-y-2">
+        <div class="p-4 space-y-2">
 
           <nuxt-link
               v-for="item in menuItems"
@@ -36,7 +36,12 @@ watch(
             <span class="font-medium">{{ item?.page.label }}</span>
           </nuxt-link>
 
-      </div>
+        </div>
+        <div class="absolute bottom-0 p-4 w-full">
+          <Button fluid label="Bыйти" outlined severity="secondary" @click="$api.auth.logout"/>
+        </div>
+
+
     </div>
     <div class="flex md:hidden bg-white shadow-lg border-r border-gray-200  p-1  justify-end">
 

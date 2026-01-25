@@ -251,14 +251,21 @@ const download_docs = async (data) => {
             <div v-for="doc in modalDocuments" :key="doc.id"
                  class="p-3 mt-3 border rounded-xl bg-gray-50">
               <div class="space-y-1">
-                <div class="flex items-center gap-3">
-                  <p class="font-medium">Версия: {{ doc.version }}</p>
-                  <UIStatus :status="doc.status" />
-                  <p v-if="doc.is_current" class="text-xs bg-gray-200 px-2 py-1 rounded-xl">Текущая</p>
+                <div class="flex items-center justify-between ">
+                  <div class="flex items-center gap-3">
+                    <p class="font-medium">Версия: {{ doc.version }}</p>
+                    <UIStatus :status="doc.status" />
+                    <p v-if="doc.is_current" class="text-xs bg-gray-200 px-2 py-1 rounded-xl">Текущая</p>
+                  </div>
+
+                  <a :href="doc.file" download>
+                    <Button icon="pi pi-download" size="small" outlined severity="secondary"/>
+
+                  </a>
                 </div>
 
                 <p class="text-xs">
-                  <a :href="doc.file" target="_blank">{{ doc.file.split('/').pop() }}</a>
+                  <a :href="doc.file" target="_blank">{{decodeURIComponent(doc.file?.split('/').pop() || '') }}</a>
                 </p>
 
                 <p class="text-xs">
