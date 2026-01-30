@@ -32,7 +32,8 @@ interface FormData {
   company_type_id: number | null
   director_name: string
   founding_date: string | null
-  authorized_capital: number | null
+  authorized_capital: number | null,
+  use_inn_for_create:boolean
 }
 
 interface ValidationState {
@@ -49,7 +50,8 @@ const formData = reactive<FormData>({
   company_type_id: null,
   director_name: '',
   founding_date: null,
-  authorized_capital: null
+  authorized_capital: null,
+  use_inn_for_create:false
 })
 
 const validation = reactive<ValidationState>({
@@ -219,20 +221,22 @@ const initializeForm = () => {
 
 const handleSubmit = () => {
   // Проверяем валидность всех полей
-  validateName()
-  validateINN()
-  validateCompanyType()
-  validateDate()
-
-  if (!isFormValid.value) {
-    toast.add({
-      severity: 'warn',
-      summary: 'Внимание',
-      detail: 'Заполните все обязательные поля корректно',
-      life: 3000
-    })
-    return
+  if (!formData.use_inn_for_create){
+    validateName()
+    validateINN()
+    validateCompanyType()
+    validateDate()
+    if (!isFormValid.value) {
+      toast.add({
+        severity: 'warn',
+        summary: 'Внимание',
+        detail: 'Заполните все обязательные поля корректно',
+        life: 3000
+      })
+      return
+    }
   }
+
   const date = new Date(formData.founding_date);
   const isoDate = date.toISOString(); // "2025-12-02T21:00:00.000Z"
   const dateOnly = isoDate.slice(0, 10);
@@ -245,7 +249,8 @@ const handleSubmit = () => {
     company_type_id: formData.company_type_id!,
     director_name: formData.director_name.trim() || null,
     founding_date: dateOnly,
-    authorized_capital: formData.authorized_capital?.toString() || null
+    authorized_capital: formData.authorized_capital?.toString() || null,
+    use_inn_for_create: formData.use_inn_for_create
   }
 
   emit('submit', submitData)
@@ -303,11 +308,15 @@ defineExpose({
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit" class="space-y-6">
-    <!-- Основная информация -->
-    <div class="space-y-4">
-      <h4 class="font-semibold text-gray-900">Основная информация</h4>
-
+<form @submit.prevent="handleSubmit" class="space-y-6">
+  <!-- Основная информация -->
+  <div v-if="!formData.use_inn_for_create" class="space-y-4">
+    <h4 class="font-semibold text-gray-900">Основная информация</h4>
+    <div v-if="!is_edit_mode" class="flex items-center gap-2">
+      <Checkbox v-model="formData.use_inn_for_create" inputId="use_inn_for_create" binary />
+      <label for="use_inn_for_create"> Создать по ИНН </label>
+    </div>
+    <div >
       <!-- Название компании -->
       <div class="field">
         <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
@@ -326,7 +335,6 @@ defineExpose({
           Название обязательно (минимум 2 символа)
         </small>
       </div>
-
       <!-- ИНН -->
       <div class="field">
         <label for="inn" class="block text-sm font-medium text-gray-700 mb-2">
@@ -347,7 +355,6 @@ defineExpose({
         </small>
       </div>
     </div>
-
     <!-- Дополнительная информация -->
     <div class="space-y-4">
       <h4 class="font-semibold text-gray-900">Дополнительная информация</h4>
@@ -463,10 +470,9 @@ defineExpose({
         </div>
       </div>
     </div>
-
     <!-- Кнопки действий -->
     <div class="flex justify-between gap-3 pt-4 border-t">
-         <div class="flex gap-3">
+      <div class="flex gap-3">
         <Button
             type="button"
             label="Отмена"
@@ -485,37 +491,84 @@ defineExpose({
         />
       </div>
     </div>
-  </form>
+
+  </div>
+  <div v-else>
+    <!-- ИНН -->
+    <div class="field">
+      <label for="inn" class="block text-sm font-medium text-gray-700 mb-2">
+        ИНН *
+      </label>
+      <InputText
+          id="inn"
+          v-model="formData.inn"
+          class="w-full"
+          :class="{ 'p-invalid': !isINNValid }"
+          placeholder="1234567890"
+          :disabled="loading"
+          @blur="validateINN"
+          @input="formatINN"
+      />
+      <small v-if="!isINNValid" class="p-error text-xs">
+        Введите корректный ИНН (10 или 12 цифр)
+      </small>
+    </div>
+    <!-- Кнопки действий -->
+    <div class="flex justify-between gap-3 pt-4 border-t">
+      <div class="flex gap-3">
+        <Button
+            type="button"
+            label="Отмена"
+            class="p-button-text p-button-secondary"
+            @click="emit('cancel')"
+            :disabled="loading"
+        />
+
+        <Button
+            type="submit"
+            :label="submitButtonLabel"
+            class="p-button-primary"
+            :loading="loading || companyTypesLoading"
+            :disabled="!formData.inn"
+            icon="pi pi-check"
+        />
+      </div>
+    </div>
+  </div>
+
+
+
+</form>
 </template>
 
 
 <style scoped>
-.field {
-  @apply space-y-1;
-}
+  .field {
+    @apply space-y-1;
+  }
 
-.p-invalid {
-  @apply border-red-500 focus:border-red-500 focus:ring-red-500;
-}
+  .p-invalid {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500;
+  }
 
-:deep(.p-dropdown) {
-  width: 100%;
-}
+  :deep(.p-dropdown) {
+    width: 100%;
+  }
 
-:deep(.p-calendar) {
-  width: 100%;
-}
+  :deep(.p-calendar) {
+    width: 100%;
+  }
 
-:deep(.p-inputnumber) {
-  width: 100%;
-}
+  :deep(.p-inputnumber) {
+    width: 100%;
+  }
 
-.preview-chip {
-  @apply text-xs px-2 py-1 rounded-full;
-}
+  .preview-chip {
+    @apply text-xs px-2 py-1 rounded-full;
+  }
 
-/* Стили для полей с иконками */
-:deep(.p-inputgroup-addon) {
-  @apply bg-gray-50 border-gray-300;
-}
+  /* Стили для полей с иконками */
+  :deep(.p-inputgroup-addon) {
+    @apply bg-gray-50 border-gray-300;
+  }
 </style>

@@ -109,6 +109,7 @@ const submit = async () => {
 
 const handleFormSubmit = async (companyData: any) => {
   console.log(companyData)
+  loading.value = true
   try {
 
       const newCompany = await $api.company.create(companyData)
@@ -121,6 +122,9 @@ const handleFormSubmit = async (companyData: any) => {
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Ошибка', detail: 'Не удалось сохранить компанию', life: 5000 })
     console.error('Ошибка сохранения:', err)
+  }
+  finally {
+    loading.value = false
   }
 }
 
@@ -157,6 +161,31 @@ const download_docs = async (data) => {
   }catch(error){
     console.log(error)
   }finally{
+    loading.value = false
+  }
+}
+
+const create_report = async () => {
+  loading.value = true
+  try{
+    await $api.company.report(companyInfo.value.company.id)
+    await refresh()
+    toast.add({
+      severity: 'success',
+      summary: 'Успешно',
+      detail: 'Отчет создан',
+      life: 3000
+    })
+    companyInfoVisible.value = false
+  }catch(error){
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: error.data.message,
+      life: 3000
+    })
+  }
+  finally{
     loading.value = false
   }
 }
@@ -207,7 +236,7 @@ const download_docs = async (data) => {
           <!-- Динамические колонки -->
           <Column v-for="col in tableData?.results.columns" :key="col.key" :header="col.name">
             <template #body="{ data }">
-              <div v-if="data.documents[col.key]">
+              <div class="flex justify-center" v-if="data.documents[col.key]">
                 <i
                     class="pi cursor-pointer"
                     :class="data.documents[col.key].icon"
@@ -218,6 +247,7 @@ const download_docs = async (data) => {
                                     })">
 
                 </i>
+
               </div>
             </template>
           </Column>
@@ -332,7 +362,7 @@ const download_docs = async (data) => {
       :closable="false"
   >
     <ModalCompany
-        :loading="pending"
+        :loading="loading"
         :is_edit_mode="false"
         @submit="handleFormSubmit"
         @cancel="showAddCompanyDialog = false"
@@ -344,11 +374,17 @@ const download_docs = async (data) => {
 <!--    "name": "new6",-->
 <!--    "inn": "213123123213",-->
 <!--    "company_type": "ОАО"-->
+
     <p>ИНН: {{companyInfo.company?.inn}}</p>
     <p>Название: {{companyInfo.company?.company_type}} {{companyInfo.company?.name}}</p>
 
     <p>Директор: {{companyInfo.company?.director_name}}</p>
     <p>Уст. капитал: {{companyInfo.company?.authorized_capital}}</p>
-    <p>Создана: {{companyInfo.company?.founding_date}}</p>
+    <p class="mb-2">Создана: {{companyInfo.company?.founding_date}}</p>
+
+    <a v-if="companyInfo.company.pdf_report" :href="companyInfo.company.pdf_report" target="_blank">
+      <Button label="Посмотреть отчет"/>
+    </a>
+    <Button v-else @click="create_report" :loading="loading" label="Создать отчет"/>
   </Dialog>
 </template>

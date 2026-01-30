@@ -41,6 +41,9 @@ export function createCompanyRepository(appFetch: typeof $fetch){
             return appFetch(`/api/company/companies/${id}/download_docs/`, {
                 responseType: 'arrayBuffer'
             })
+        },
+        report(id) {
+            return appFetch(`/api/company/companies/${id}/report/`, )
         }
 
     }

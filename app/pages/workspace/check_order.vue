@@ -91,7 +91,10 @@ const groupedByCompany = computed(() => {
   // Инициализируем comment и new_type для каждого документа
   const processedData = data.map(item => ({
     ...item,
+
     comment: item.comment || '',
+    valid_from: new Date(item.valid_from) || null,
+    valid_until: new Date(item.valid_until) || null,
     new_type: item.new_type || null
   }));
 
@@ -111,13 +114,28 @@ const groupedByCompany = computed(() => {
       }, {})
   );
 });
+function formatDateForDjango(date) {
+  // Проверяем, что date существует и является валидной датой
+  console.log(date)
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return null; // или return '' в зависимости от ваших требований
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 const newTypeSelected = async (doc) => {
   console.log(doc)
+  console.log(formatDateForDjango(doc.valid_from))
   await $api.document.version_update({
     uuid: doc.uuid,
     type: doc.new_type,
-    comment: doc.comment
+    comment: doc.comment,
+    valid_from: formatDateForDjango(doc.valid_from),
+    valid_until: formatDateForDjango(doc.valid_until)
   })
   await refresh()
 }
@@ -178,20 +196,21 @@ const newTypeSelected = async (doc) => {
 
                   <p v-if="doc.document.document_type_name" class="font-medium">{{doc.document.document_type_name}}  </p>
 
-                  <Select v-else
-                          :options="document_types"
-                          v-model="doc.new_type"
-                          size="small"
-                          option-label="name"
-                          @update:model-value="newTypeSelected(doc)"
-                          placeholder="Выберите тип"/>
-                  <div class="flex items-center gap-3">
+                  <div class="flex flex-wrap md:flex-nowrap items-center gap-3">
+                    <Select v-if="!doc.document.document_type_name"
+                            :options="document_types"
+                            v-model="doc.new_type"
+                            size="small"
+                            option-label="name"
 
-<!--                    <p class="font-medium">-->
+                            placeholder="Выберите тип"/>
+                    <DatePicker size="small"  v-model="doc.valid_from" dateFormat="dd/mm/yy" placeholder="Действует с"/>
+                    <DatePicker size="small"  v-model="doc.valid_until" dateFormat="dd/mm/yy" placeholder="Действует до"/>
+                    <div class="">
+                      <Button size="small"  severity="success"  icon="pi pi-check" @click="newTypeSelected(doc)"/>
+                    </div>
 
-<!--                      Версия: {{ doc.version }} </p>-->
-<!--                    <UIStatus :status="doc.status" />-->
-                    <p class="text-xs rounded-xl py-1 px-2 bg-gray-200" v-if="doc.is_current">Текущая</p>
+
                   </div>
                   <p class="text-xs">{{decodeURIComponent(doc.file?.split('/').pop() || '')}}</p>
                   <p class="text-xs"><i class="pi pi-calendar"></i> {{new Date(doc.upload_date).toLocaleDateString()}}</p>

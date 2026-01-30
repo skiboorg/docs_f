@@ -67,6 +67,10 @@ watch(selectedType, async () => {
       : null
   await refresh()
 })
+
+const update = async () => {
+  await refresh()
+}
 </script>
 
 <template>
@@ -130,7 +134,10 @@ watch(selectedType, async () => {
           </div>
 
           <div v-else class="space-y-4">
-            <CardDownload v-show="item.versions.length>0" v-for="item in document_response?.results" :key="item.uuid" :item="item"/>
+            <CardDownload v-show="item.versions.length>0"
+                          @need_update="update"
+                          v-for="item in document_response?.results"
+                          :key="item.uuid" :item="item"/>
           </div>
         </div>
       </div>
