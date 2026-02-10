@@ -74,6 +74,7 @@ const handleFormSubmit = async (companyData: any) => {
       if (index !== -1) {
         companies.value[index] = updated
       }
+      editMode.value = false
     } else {
       // Создание новой компании
       const newCompany = await $api.company.create(companyData)
@@ -235,17 +236,17 @@ watch(() => showAddCompanyDialog.value, (val) => {
             </div>
           </div>
 
-          <!-- Дата создания -->
-          <div class="mt-4 pt-4 border-t text-xs text-gray-500">
-            Создано: {{ new Date(company.company_type?.created_at).toLocaleString('ru-RU') }}
-          </div>
+<!--          &lt;!&ndash; Дата создания &ndash;&gt;-->
+<!--          <div class="mt-4 pt-4 border-t text-xs text-gray-500">-->
+<!--            Создано: {{ new Date(company.founding_date).toLocaleDateString('ru-RU') }}-->
+<!--          </div>-->
         </template>
       </Card>
 
       <!-- Пагинация -->
       <div v-if="totalCount > 0" class="flex justify-between items-center mt-6 pt-6 border-t">
         <div class="text-sm text-gray-600">
-          Страница {{ page }} • Показано {{ companies.length }} из {{ totalCount }}
+          Страница {{ page }} • Показано {{ companies.length }} из {{ companies_response?.count }}
         </div>
         <div class="flex gap-2">
           <Button
@@ -286,6 +287,7 @@ watch(() => showAddCompanyDialog.value, (val) => {
         :style="{ width: '600px' }"
         :modal="true"
         :closable="false"
+        @hide="editMode=false"
     >
       <ModalCompany
           :company="editingCompany"

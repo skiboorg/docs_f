@@ -88,28 +88,36 @@ const groupedByCompany = computed(() => {
 
   if (!data || !Array.isArray(data)) return [];
 
-  // Инициализируем comment и new_type для каждого документа
+  // Обрабатываем данные
   const processedData = data.map(item => ({
     ...item,
-
     comment: item.comment || '',
-    valid_from: new Date(item.valid_from) || null,
-    valid_until: new Date(item.valid_until) || null,
+    valid_from: item.valid_from ? new Date(item.valid_from) : null,
+    valid_until: item.valid_until ? new Date(item.valid_until) : null,
+    // В новом формате document_type может быть на уровне document
     new_type: item.new_type || null
   }));
 
+  // Группируем по компаниям
   return Object.values(
       processedData.reduce((acc: any, item: any) => {
-        const companyName = item.document.company_name;
+        const companyUuid = item.document?.company?.uuid;
 
-        if (!acc[companyName]) {
-          acc[companyName] = {
-            company_name: companyName,
+        // Пропускаем элементы без компании
+        if (!companyUuid) return acc;
+
+        if (!acc[companyUuid]) {
+          acc[companyUuid] = {
+            company_uuid: companyUuid,
+            company_name: item.document.company.name,
+            company_inn: item.document.company.inn,
+            company_heads: item.document.company.heads || [], // Добавлено
+            company: item.document.company, // Сохраняем полную информацию о компании
             documents: []
           };
         }
 
-        acc[companyName].documents.push(item);
+        acc[companyUuid].documents.push(item);
         return acc;
       }, {})
   );
@@ -135,7 +143,8 @@ const newTypeSelected = async (doc) => {
     type: doc.new_type,
     comment: doc.comment,
     valid_from: formatDateForDjango(doc.valid_from),
-    valid_until: formatDateForDjango(doc.valid_until)
+    valid_until: formatDateForDjango(doc.valid_until),
+    head: doc.head
   })
   await refresh()
 }
@@ -191,13 +200,21 @@ const newTypeSelected = async (doc) => {
             <div v-for="company in groupedByCompany" :key="company.company_name" class="p-3 mb-2 border rounded-xl bg-gray-50">
               <h3 class="text-2xl">{{ company.company_name }}</h3>
 
+
               <div v-for="doc in company.documents" :key="doc.uuid" class="grid grid-cols-12 border-b pb-2 mb-2">
                 <div class="col-span-7  space-y-1">
 
+                  <Select
+                      :options="company.company_heads"
+                      v-model="doc.head"
+                      size="small"
+                      option-label="head.fio"
+
+                      placeholder="Выберите руководителя"/>
                   <p v-if="doc.document.document_type_name" class="font-medium">{{doc.document.document_type_name}}  </p>
 
                   <div class="flex flex-wrap md:flex-nowrap items-center gap-3">
-                    <Select v-if="!doc.document.document_type_name"
+                    <Select
                             :options="document_types"
                             v-model="doc.new_type"
                             size="small"

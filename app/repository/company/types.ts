@@ -28,3 +28,18 @@ export interface ICompanyListResponse {
     previous: string | null;
     results: ICompany[];
 }
+
+export interface IHead{
+    id: number;
+    fio: string;
+    inn: string | null;
+    passport: string | null;
+    registration: string | null;
+}
+export interface ICompanyHead{
+    company :ICompany;
+    head :IHead;
+    start_date : string;
+    end_date: string;
+    is_active : boolean;
+}
